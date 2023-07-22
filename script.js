@@ -67,17 +67,25 @@ const inputLoanAmount = document.querySelector('.form__input--loan-amount');
 const inputCloseUsername = document.querySelector('.form__input--user');
 const inputClosePin = document.querySelector('.form__input--pin');
 
-const displayMovements = function (movements, sort = false) {
+const displayMovements = function (acc, sort = false) {
     containerMovements.innerHTML = '';
 
-    const movs = sort ? movements.slice().sort((a, b) => a - b) : movements;
+    const movs = sort ? acc.movements.slice().sort((a, b) => a - b) : acc.movements;
 
     movs.forEach(function (mov, i) {
         const type = mov > 0 ? 'deposit' : 'withdrawal';
 
+        const date = new Date(acc.movementsDates[i]);
+        const day = `${date.getDate()}`.padStart(2, 0);
+        const month = `${date.getMonth() + 1}`.padStart(2, 0);
+        const year = date.getFullYear();
+
+        const displayDate = `${day}/${month}/${year}`;
+
         const html = `
           <div class="movements__row">
             <div class="movements__type movements__type--${type}">${i + 1} ${type}</div>
+            <div class="movements__date">${displayDate}</div>
             <div class="movements__value">${mov.toFixed(2)} €</div>
         </div>
         `;
@@ -112,7 +120,7 @@ const calcDisplaySummary = function (acc) {
 };
 
 const updateUI = function (acc) {
-    displayMovements(acc.movements);
+    displayMovements(acc);
     calcDisplayBalance(acc);
     calcDisplaySummary(acc);
 }
@@ -137,6 +145,14 @@ btnLogin.addEventListener('click', function (e) {
         labelWelcome.textContent = `Welcome back, ${currentAccount.owner.split(' ')[0]}`;
         containerApp.style.opacity = 100;
 
+        const now = new Date();
+        const day = `${now.getDate()}`.padStart(2, 0);
+        const month = `${now.getMonth() + 1}`.padStart(2, 0);
+        const year = now.getFullYear();
+        const hour = `${now.getHours()}`.padStart(2, 0);
+        const min = `${now.getMinutes()}`.padStart(2, 0);
+        labelDate.textContent = `${day}/${month}/${year}, ${hour}:${min}`;
+
         inputLoginUsername.value = inputLoginPin.value = '';
         inputLoginPin.blur();
         updateUI(currentAccount);
@@ -152,6 +168,10 @@ btnTransfer.addEventListener('click', function (e) {
     if (amount > 0 && receiverAcc && currentAccount.balance >= amount && receiverAcc?.username !== currentAccount.username) {
         currentAccount.movements.push(-amount);
         receiverAcc.movements.push(amount);
+
+        currentAccount.movementsDates.push(new Date().toISOString());
+        receiverAcc.movementsDates.push(new Date().toISOString());
+
         updateUI(currentAccount);
     }
 });
@@ -177,6 +197,9 @@ btnLoan.addEventListener('click', function (e) {
 
     if (amount > 0 && currentAccount.movements.some(mov => mov >= amount * 0.1)) {
         currentAccount.movements.push(amount);
+
+        currentAccount.movementsDates.push(new Date().toISOString());
+
         updateUI(currentAccount);
     }
     inputLoanAmount.value = '';
@@ -185,6 +208,6 @@ btnLoan.addEventListener('click', function (e) {
 let sorted = false;
 btnSort.addEventListener('click', function (e) {
     e.preventDefault();
-    displayMovements(currentAccount.movements, !sorted);
+    displayMovements(currentAccount, !sorted);
     sorted = !sorted;
 });
