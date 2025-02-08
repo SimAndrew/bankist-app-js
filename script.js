@@ -90,15 +90,20 @@ const formatCur = function (value, locale, currency) {
 const displayMovements = function (acc, sort = false) {
     containerMovements.innerHTML = '';
 
-    const movs = sort ? acc.movements.slice().sort((a, b) => a - b) : acc.movements;
+    const combinedMoveDates = acc.movements.map((mov, i) => {
+        return { movement: mov, MovementDate: acc.movementsDates.at(i) };
+    });
+    
+    if (sort) {combinedMoveDates.sort((a, b) => a.movement - b.movement)}
 
-    movs.forEach(function (mov, i) {
-        const type = mov > 0 ? 'deposit' : 'withdrawal';
+    combinedMoveDates.forEach(function (obj, i) {
+        const {movement, MovementDate} = obj;
+        const type = movement > 0 ? 'deposit' : 'withdrawal';
 
-        const date = new Date(acc.movementsDates[i]);
+        const date = new Date(MovementDate);
         const displayDate = formatMovementDate(date, acc.locale);
 
-        const formattedMov = formatCur(mov, acc.locale, acc.currency);
+        const formattedMov = formatCur(movement, acc.locale, acc.currency);
 
         const html = `
           <div class="movements__row">
